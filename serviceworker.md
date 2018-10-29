@@ -16,26 +16,81 @@
 由此出现了异步操作，可不影响主界面的响应。如ajax、promise等。
 除此之外，还有html5开放的web worker可以在浏览器后台挂载新线程。它无法直接操作DOM，无法访问window、document、parent对象
 
-SW是web worker的一种，也是挂载在浏览器后台的线程。它同样无访问window、document、parent对象；并且由于可以代理网页的请求并缓存返回结果的强大能力，浏览器要求必须是在https中使用。
+SW是web worker的一种，也是挂载在浏览器后台运行的线程。主要用于代理网页请求，可缓存请求结果；可实现离线缓存功能。也拥有单独的作用域范围和运行环境
 
-在SW装载成功后，它作用域下的请求都可以代理缓存
+### sw使用限制
+- 同源策略，缓存及拦截的请求必须与主线程同源
+- 无法直接操作DOM对象，也无法访问window、document、parent对象。可以访问location、navigator
+- 可代理的页面作用域限制。默认是sw.js所在文件目录及子目录的请求可代理，可在注册时手动设置作用域范围
+- 必须在https中使用，允许开发调试的localhost使用
+
+### SW兼容性
+图片
 
 ## service worker可以解决的问题
 * 用户多次访问网站时加快访问速度
 * 离线缓存接口请求及文件，更新、清除缓存内容
 * 可以在客户端通过 indexedDB API 保存持久化信息
 
+
 ## 生命周期
+生命周期由5步：注册、安装成功（安装失败）、激活、运行、销毁
+事件：install、activate、message、fetch、push、async
+
 ### 注册
+在主线程中调起注册方法register
+
+    if('serviceWorker' in navigator){
+        navigator.serviceWorker
+            .register('./sw.js', {scope: '/'})
+            .then(reg => {
+                console.log('注册成功')
+            })
+            .catch(error => {
+                console.log('注册失败')
+            })
+    }else{
+        console.log('当前浏览器不支持SW')
+    }
 
 ### 安装
+在服务线程中添加安装监听及对应需缓存的资源文件
+
+    const CACHE_NAME = 'sylvia_cache'
+    let filesToCache = [
+        '/src/css/test.css',
+        '/src/js/test.js'
+    ]
+    
+    self.addEventListener('install', function(event){
+        event.waitUntil(
+            caches.open(CACHE_NAME).then(cache => {
+                cache.addAll(filesToCache)
+            })
+        )
+    })
 
 ### 激活
+第一次注册并安装成功后，会触发activate事件
+
+    self.addEventListener('activate', event => {
+        console.log('安装成功，即将监听作用域下的所有页面')
+    })
 
 ### 运行
+安装并激活成功后，就可以对页面实行fetch监控啦。
 
-### 安装失败
+- 可以过滤使用已缓存的请求，若无缓存，由fetch发起新的请求，并返回给页面
 
+
+
+    self.addEventListener('activate', event => {
+        event.
+    })
+
+
+
+- 也可连续将请求缓存到内存里
 ### 进程销毁
 
 ## 使用方法
@@ -44,3 +99,5 @@ SW是web worker的一种，也是挂载在浏览器后台的线程。它同样�
 ## debug
 
 ## 应用框架workbox
+
+
